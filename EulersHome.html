@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<head>
+	<script src="https://www.desmos.com/api/v1.2/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+<html>
+<body>
+	<h1>Euler's Method Visualization</h1>
+	<h4> By: Ritik Gupta </h4>
+	<div id="calculator" style="width: 450px; height: 425px;"></div>
+	<img id="icon" src="desmosic.png" style="width: 300px; height:300px;">
+	<button id= "refresh" onclick="myFunction()">Try It!</button>
+	<div id= "inst">
+			<h2> Latex Instructions </h2>
+			<p> Enter trigonometric and logarithmic functions with backslash infront. Ex: \sin x or \ln x. </p>
+			<p> Put curly braces around and backslashes before square roots. Ex: \sqrt {1+x^2}. </p>
+			<p> Enter all points and conditions as decimals. </p>
+			<p> You may use the desmos box on the right to copy the latex form of your differential equation </p>
+			<p> Ensure that the initial condition is in the domain of the differential equation. </p>
+		</div>
+	<script>
+		var elt = document.getElementById('calculator');
+		var calculator = Desmos.GraphingCalculator(elt);
+	</script>
+	<style>
+		body {
+			background-color:lightyellow;
+
+		}
+
+		h1 {
+			text-align: center;
+
+		}
+		h4 {
+			text-align:center;
+		}
+		#inst {
+				position:absolute;
+				left:39%;
+				top:20%;
+				border: solid;
+				height: 62%;
+				width: 20%;
+				padding: 10px;
+				text-align: center;
+			}
+
+		#refresh {
+				position:absolute;
+				left: 46%;
+				top: 87%;
+				background-color: #4CAF50;
+				border: none;
+				color: white;
+				padding: 15px 32px;
+				text-align: center;
+				text-decoration: none;
+				display: inline-block;
+				font-size: 16px;
+				margin: 4px 2px;
+				cursor: pointer;
+			}
+
+		#calculator {
+			position:absolute;
+			left:63%;
+			/*height:40%;*/
+			/*width:20%;*/
+			top:20%;
+		}
+
+		#icon {
+			position:absolute;
+			left:13%;
+			/*height:40%;*/
+			/*width:20%;*/
+			top:30%;
+
+		}
+	</style>
+	<script>
+		function myFunction() {
+			location.replace("Desmos.html");
+		}
+	</script>
+</body>
+</html>

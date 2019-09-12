@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<head>
+	<script src="https://www.desmos.com/api/v1.2/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+<html>
+<body>
+	<div id="calculator" style="width: 800px; height: 600px;"></div>
+	<div id= "inst">
+		<h2> Latex Instructions </h2>
+		<p> Enter trigonometric and logarithmic functions with backslash infront. Ex: \sin x or \ln x. </p>
+		<p> Put curly braces around and backslashes before square roots. Ex: \sqrt {1+x^2}. </p>
+		<p> Enter all points and conditions as decimals. </p>
+		<p> Enter the initial condition in the form of an ordered pair. </p>
+		<p> Enter the endpoint as a single x-value. </p>
+	</div>
+	<button id= "refresh" onclick="myFunction()">Go Again!</button>
+	<button id= "refresh1" onclick="myFunction1()">Home</button>
+	<script>
+
+			//initialise constructor for Desmos API
+			var elt = document.getElementById('calculator');
+			var calculator = Desmos.GraphingCalculator(elt);
+
+  			//initialise variables based on user input
+  			var diffEq = window.prompt("Enter differential equation in latex. Ex: \\sqrt {1+x^2}");
+  			var start = window.prompt("Enter initial condition. Ex: (0,0)");
+  			var step = window.prompt("Enter step size. Ex: 0.5");
+  			var endPoint = window.prompt("Enter end point. Ex: 2");
+  			var stepSize = parseFloat(step);
+  			includesY = false;
+  			onlyY = false;
+  			constant = false;
+
+  			//setting all the initial equations in desmos based off of the differential equation (x, y, none, only 1)
+  			if (diffEq.includes("x") && diffEq.includes("y")) {
+  				includesY = true;
+  				calculator.setExpression({id:'diff', latex:'g(x,y)= ' + diffEq, hidden: true});
+  			} else if(diffEq.includes("y")) {
+  				includesY = true;
+  				onlyY = true;
+  				calculator.setExpression({id:'diff', latex:'g(y)= ' + diffEq, hidden: true});
+  			}
+  			else if (diffEq.includes("x")) {
+  				calculator.setExpression({id:'diff', latex:'s(x)= ' + diffEq, hidden: true});
+  			} else {
+  				constant = true;
+  				calculator.setExpression({id:'diff', latex:'s(x)= ' + diffEq, hidden: true});
+  			}
+
+  			//extracting the initial x and y coordinates from the user input with help of the string class. 
+  			var startX = start.substring(start.indexOf("(")+1, start.indexOf(","));
+  			var iX = startX;
+  			var startY = start.substring(start.indexOf(",")+1, start.indexOf(")"));
+  			var i = 0;
+  			var prevY = startY;
+  			var xcords = [];
+  			ycords = [];
+  			eulers = [];
+  			deriv = 0;
+  			prevY = 0;
+
+  			//creating the array of x-values by using the initial x and incrementing it by the step size until the endpoint is reached
+  			while (+(parseFloat(startX).toFixed(5)) <= parseFloat(endPoint)) {
+  				xcords.push(+(parseFloat(startX)).toFixed(5));
+  				startX = parseFloat(startX) + parseFloat(stepSize);
+  			}
+  			i = 0;
+
+  			//If the differential equation does not depend on y, I can set expressions for the derivatives since they only depend on x. The while loop below creates all the expressions from the array of x-cords previously filled.
+  			if (!includesY) {
+  			while (i < xcords.length) {
+  				calculator.setExpression({id:'new' + i, latex: "f(x) = s(" + xcords[i] + ")", hidden: true});
+  				i++;
+
+  			}
+  		}
+
+  			
+  			//creating and copying initial variables to be manipulated in the following function
+  			dupX = +(Number(iX.slice())).toFixed(5);
+  			changeY = [];
+  			copyStep = stepSize;
+  			var yderivs = [];
+  			yvals = [];
+  			copyX = xcords;
+  			var newX = xcords.slice();
+  			tester = [];
+  			yvals.push(startY);
+  			changeY.push(startY);
+
+
+  			//function to update the y values based off of euler's method if the differential equation includes y.
+  			if (includesY) {		
+  				calculator.observe('expressionAnalysis', function() {
+  					for (var id in calculator.expressionAnalysis) {
+  						var analysis = calculator.expressionAnalysis[id];
+  						if (analysis.evaluation) {
+  							console.log(`value: ${analysis.evaluation.value}`);
+  							deriv = analysis.evaluation.value; 
+  							yderivs = [];
+  							yderivs.push(deriv);
+  							tester = filterArray(yderivs, deriv); //filterArray is a self made function that basically deals with the asynchronous response from Desmos that is difficult to incorporate in synchronous code
+  						}
+  					}
+  
+  					var id = makeid(12); //create a randomly generated id to ensure new expressions can be created. (Every expression must have a unique id).
+
+					//update the y-values from the previous derivative held in the first element of the yvals array	  			
+  					if(yderivs.length > 0) { 
+  					var temp = tester.splice(0,1);
+  					var updateY = +((Number(yvals.splice(0,1)) + (Number(stepSize) * Number(temp)))).toFixed(5);
+  					yvals.push(updateY);
+  					changeY.push(updateY);
+  				}
+  				
+  				//if the differential equation includes only a y and no x, I set an expression of only g(y)
+  				if (onlyY) {
+  					if (+(Number(iX)).toFixed(5) <= Number(endPoint)) {
+  					calculator.setExpression({id: id, latex: "g(" + yvals[0] + ")"});
+  					iX = +(Number(iX) + Number(copyStep)).toFixed(5);
+  					}
+  				
+  				//else if the differential equation includes x and y, I set an expression g(x,y)	
+  				} else {
+  					if (yvals.length > 0 && copyX.length > 0) {
+  						calculator.setExpression({id: id, latex: "g(" + copyX.splice(0,1) + "," + yvals[0] + ")"});
+  					
+  					}
+
+  				}
+  				
+  				//Another if statement to work around the asynchronous desmos function. If the length of the yvalues array is equal to the (endpoint-startx)/stepSize, ONLY THEN create the table of x and y values for Desmos to plot.
+  				if((changeY.length) == Math.floor(((endPoint-dupX)/(stepSize))+1)) {
+  					calculator.setExpression({
+  							type: 'table',
+  							columns: [
+  							{
+  								latex: 'x',
+  								values: newX
+  							},
+  							{
+  								latex: 'y',
+  								values: changeY,
+  								columnMode: Desmos.ColumnModes.LINES
+  							}
+  							]
+  						});
+
+  				} else {
+  					return;
+  				}
+  				
+  				});
+  			} 
+
+  			//The function to update the yvalues from euler's method if the differential equation does not contain y
+  			else {
+  				calculator.observe('expressionAnalysis', function() {
+  					for (var id in calculator.expressionAnalysis) {
+  						var analysis = calculator.expressionAnalysis[id];
+  						if (analysis.evaluation) {
+  							console.log(`value: ${analysis.evaluation.value}`);
+  							deriv = analysis.evaluation.value;
+  							ycords.push(parseFloat(deriv));
+  						}
+  					}
+  					i = 0;
+  					if(constant) {
+  						ycords.splice(0,1);
+  					}
+
+  					while (i < ycords.length) {
+  						if (i == 0) {
+  							prevY = startY;
+  							eulers[0] = prevY;
+  						} else {
+  							prevY = eulers[i-1];
+  							eulers[i] = +(parseFloat(prevY) + (parseFloat(stepSize) * parseFloat(ycords[i-1]))).toFixed(5);
+  						}
+  						i++;
+  					}
+
+  					//if statement to work around the asynchronous desmos function. If the length of the yvalues array is equal to the (endpoint-startx)/stepSize, ONLY THEN create the table of x and y values for Desmos to plot
+
+  					if (eulers.length == Math.floor(((endPoint-dupX)/(stepSize))+1)) {
+  						calculator.setExpression({
+  							type: 'table',
+  							columns: [
+  							{
+  								latex: 'x',
+  								values: xcords
+  							},
+  							{
+  								latex: 'y',
+  								values: eulers,
+  								columnMode: Desmos.ColumnModes.LINES
+  							}
+  							]
+  						});
+  					} else {
+  						return;
+  					}
+  				});
+  			}
+
+
+  			//refresh button
+  			function myFunction() {
+  				window.location.reload();
+  			}
+
+  			//home button
+  			function myFunction1() {
+  				location.replace("EulersHome.html");
+  			}
+
+  			//function to make a random almost guaranteed unique ID
+  			function makeid(length) {
+  			   var result           = '';
+  			   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  			   var charactersLength = characters.length;
+  			   for ( var i = 0; i < length; i++ ) {
+  			      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  			   }
+  			   return result;
+  			}
+
+
+  			// function to basically work around the asynchronous response of desmos. It recognizes the first occurrence of a value, and removes all of the following occurences after that index
+  			function filterArray(arr, d) {
+  			    var i = 0;
+  			    var pos = 0;
+  			    var first = false;
+  			    while (i < arr.length) {
+  			        if(arr[i] == d) {
+  			            pos = i;
+  			            for(var b = pos+1; b < arr.length; b++) {
+  			                if(arr[b] == d) {
+  			                    arr.splice(b,1);
+  			                }
+  			            }
+  			        }
+  			        
+  			        i++;
+  			    }
+  			    return arr;
+  			    
+  			}
+
+
+
+  		</script>
+
+  		<style>
+  		body {
+  			background-color:lightyellow;
+  		} 
+  		#inst {
+  			position:absolute;
+  			left:70%;
+  			top: 10%;
+  			border: solid;
+  			height: 60%;
+  			width: 20%;
+  			padding: 10px;
+  			text-align: center;
+  		}
+
+  		#refresh {
+  			position:absolute;
+  			left: 70%;
+  			top: 80%;
+  			background-color: #4CAF50;
+  			border: none;
+  			color: white;
+  			padding: 15px 32px;
+  			text-align: center;
+  			text-decoration: none;
+  			display: inline-block;
+  			font-size: 16px;
+  			margin: 4px 2px;
+  			cursor: pointer;
+  		}
+
+  		#refresh1 {
+  			position:absolute;
+  			left: 83%;
+  			top: 80%;
+  			background-color: #4CAF50;
+  			border: none;
+  			color: white;
+  			padding: 15px 32px;
+  			text-align: center;
+  			text-decoration: none;
+  			display: inline-block;
+  			font-size: 16px;
+  			margin: 4px 2px;
+  			cursor: pointer;
+  		}
+
+  	</style>
+  </body>
+
+  </html>
